@@ -1,1 +1,140 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>3D Card Viewer</title>
+    <!-- Подключаем 3D движок -->
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"></script>
+    <!-- Шрифт -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        body { margin: 0; background-color: #f0f2f5; font-family: 'Montserrat', sans-serif; display: flex; flex-direction: column; align-items: center; }
+        
+        /* Окно просмотра */
+        model-viewer {
+            width: 100%;
+            height: 450px;
+            background-color: #2b2b2b;
+            --poster-color: transparent;
+        }
 
+        /* Панель управления */
+        .controls {
+            margin-top: 20px;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 500px;
+        }
+        
+        label { display: block; margin-bottom: 5px; font-size: 14px; color: #555; }
+        
+        select, input { 
+            width: 100%; padding: 12px; margin-bottom: 15px; 
+            border: 1px solid #ddd; border-radius: 6px; 
+            font-family: inherit; font-size: 16px;
+        }
+        
+        button {
+            width: 100%; padding: 15px;
+            background: #e67e22; color: white; border: none;
+            font-weight: 900; cursor: pointer; border-radius: 6px;
+            text-transform: uppercase; letter-spacing: 1px;
+            transition: 0.3s;
+        }
+        button:hover { background: #d35400; }
+        
+        textarea { width: 100%; height: 60px; background: #111; color: #0f0; border-radius: 6px; padding: 10px; font-family: monospace; resize: none; }
+    </style>
+</head>
+<body>
+
+    <!-- 3D МОДЕЛЬ -->
+    <!-- src будет меняться скриптом -->
+    <model-viewer 
+        id="viewer"
+        src="" 
+        camera-controls 
+        shadow-intensity="1.5"
+        exposure="0.8"
+        environment-image="neutral"
+        auto-rotate
+    >
+    </model-viewer>
+
+    <div class="controls">
+        <label>Выберите тип карты:</label>
+        <select id="card-selector" onchange="changeModel()">
+            <!-- В value вставьте имена ваших файлов на GitHub -->
+            <option value="card_janitor.glb" data-name="Janitor Keycard" data-color="#A58EF0">Уборщик</option>
+            <option value="card_scientist.glb" data-name="Scientist Keycard" data-color="#F1C40F">Ученый</option>
+            <option value="card_mtf.glb" data-name="MTF Keycard" data-color="#3498DB">Капитан МОГ</option>
+            <option value="card_o5.glb" data-name="O5 Keycard" data-color="#222222">Совет O5</option>
+        </select>
+
+        <label>Кастомное название (для команды):</label>
+        <input type="text" id="inp-name" value="Janitor Keycard" oninput="generateCode()">
+        
+        <label>ID Предмета:</label>
+        <input type="text" id="inp-id" value="0" oninput="generateCode()">
+
+        <label>Команда cinfo:</label>
+        <textarea id="result" readonly></textarea>
+        <button onclick="copy()">Скопировать</button>
+    </div>
+
+    <script>
+        // ==========================================
+        // НАСТРОЙКА ССЫЛКИ НА ВАШ GITHUB
+        // Вставьте сюда начало ссылки на ваш репозиторий
+        // ==========================================
+        const GITHUB_URL = "https://ваш-ник.github.io/scp-keycards/"; 
+        
+        const viewer = document.getElementById('viewer');
+        const selector = document.getElementById('card-selector');
+        const nameInput = document.getElementById('inp-name');
+
+        function changeModel() {
+            // 1. Получаем имя файла из селектора
+            const filename = selector.value;
+            
+            // 2. Меняем 3D модель
+            viewer.src = GITHUB_URL + filename;
+            
+            // 3. Автоматически меняем название в поле ввода
+            const selectedOption = selector.options[selector.selectedIndex];
+            nameInput.value = selectedOption.getAttribute('data-name');
+            
+            generateCode();
+        }
+
+        function generateCode() {
+            const id = document.getElementById("inp-id").value;
+            const name = nameInput.value;
+            
+            // Берем цвет, который мы заранее прописали в <option> (data-color)
+            const color = selector.options[selector.selectedIndex].getAttribute('data-color');
+            
+            // Генерируем красивое описание
+            // Используем HTML теги внутри cinfo
+            const desc = `<size=20><b><color=${color}>${name}</color></b></size>`;
+            
+            const cmd = `cinfo ${id} ${desc}`;
+            document.getElementById("result").value = cmd;
+        }
+
+        function copy() {
+            const t = document.getElementById("result");
+            t.select();
+            document.execCommand("copy");
+            alert("Скопировано!");
+        }
+
+        // Запуск при старте
+        changeModel();
+    </script>
+</body>
+</html>
