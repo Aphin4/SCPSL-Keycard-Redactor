@@ -1,140 +1,139 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>3D Card Viewer</title>
-    <!-- Подключаем 3D движок -->
-    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"></script>
-    <!-- Шрифт -->
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
-    
+    <script type="module" src="https://ajax.googleapis.com"></script>
     <style>
-        body { margin: 0; background-color: #f0f2f5; font-family: 'Montserrat', sans-serif; display: flex; flex-direction: column; align-items: center; }
-        
-        /* Окно просмотра */
-        model-viewer {
-            width: 100%;
-            height: 450px;
-            background-color: #2b2b2b;
-            --poster-color: transparent;
-        }
-
-        /* Панель управления */
-        .controls {
-            margin-top: 20px;
-            background: white;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            width: 90%;
-            max-width: 500px;
-        }
-        
-        label { display: block; margin-bottom: 5px; font-size: 14px; color: #555; }
-        
-        select, input { 
-            width: 100%; padding: 12px; margin-bottom: 15px; 
-            border: 1px solid #ddd; border-radius: 6px; 
-            font-family: inherit; font-size: 16px;
-        }
-        
-        button {
-            width: 100%; padding: 15px;
-            background: #e67e22; color: white; border: none;
-            font-weight: 900; cursor: pointer; border-radius: 6px;
-            text-transform: uppercase; letter-spacing: 1px;
-            transition: 0.3s;
-        }
-        button:hover { background: #d35400; }
-        
-        textarea { width: 100%; height: 60px; background: #111; color: #0f0; border-radius: 6px; padding: 10px; font-family: monospace; resize: none; }
+        :root { --bg: #121212; --panel: #1e1e1e; --accent: #3498db; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); color: white; display: flex; flex-direction: row; gap: 20px; padding: 20px; margin: 0; }
+        .controls { width: 350px; background: var(--panel); padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); overflow-y: auto; max-height: 90vh; }
+        .group { margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        label { display: block; font-size: 11px; text-transform: uppercase; color: #888; margin-bottom: 5px; }
+        input, select { width: 100%; background: #2a2a2a; border: 1px solid #444; color: white; padding: 8px; border-radius: 4px; box-sizing: border-box; }
+        .row { display: flex; gap: 10px; }
+        #viewer { flex-grow: 1; height: 90vh; background: radial-gradient(#333, #000); border-radius: 12px; }
+        .cmd-box { background: #000; color: #0f0; padding: 15px; font-family: monospace; font-size: 13px; border-radius: 4px; border: 1px solid #0f0; cursor: pointer; position: relative; }
+        .cmd-box:active { background: #050; }
     </style>
 </head>
 <body>
 
-    <!-- 3D МОДЕЛЬ -->
-    <!-- src будет меняться скриптом -->
-    <model-viewer 
-        id="viewer"
-        src="" 
-        camera-controls 
-        shadow-intensity="1.5"
-        exposure="0.8"
-        environment-image="neutral"
-        auto-rotate
-    >
-    </model-viewer>
-
-    <div class="controls">
-        <label>Выберите тип карты:</label>
-        <select id="card-selector" onchange="changeModel()">
-            <!-- В value вставьте имена ваших файлов на GitHub -->
-            <option value="Case_Keycard_Primary.glb" data-name="Карта в металлической обводке" data-color="#A58EF0">Карта в металлической обводке</option>
-            <option value="Site02_Keycard_Primary.glb" data-name="Карта Зоны-02" data-color="#F1C40F">Карта Зоны-02</option>
-            <option value="Admin_Keycard_Primary.glb" data-name="Административная карта" data-color="#3498DB">Административная карта</option>
-            <option value="MTF_Keycard_Primary.glb" data-name="Карта МОГ" data-color="#222222">Карта МОГ</option>
-        </select>
-
-        <label>Кастомное название (для команды):</label>
-        <input type="text" id="inp-name" value="Janitor Keycard" oninput="generateCode()">
-        
-        <label>ID Предмета:</label>
-        <input type="text" id="inp-id" value="0" oninput="generateCode()">
-
-        <label>Команда cinfo:</label>
-        <textarea id="result" readonly></textarea>
-        <button onclick="copy()">Скопировать</button>
+<div class="controls">
+    <h3>Keycard Editor 14.1</h3>
+    
+    <div class="group">
+        <label>ID Игрока & Имя в инвентаре</label>
+        <div class="row">
+            <input type="number" id="pId" value="17" style="width: 30%">
+            <input type="text" id="invName" value="Keycard">
+        </div>
     </div>
 
-    <script>
-        // ==========================================
-        // НАСТРОЙКА ССЫЛКИ НА ВАШ GITHUB
-        // Вставьте сюда начало ссылки на ваш репозиторий
-        // ==========================================
-        const GITHUB_URL = "https://ваш-ник.github.io/scp-keycards/"; 
+    <div class="group">
+        <label>Допуски (0-3)</label>
+        <div class="row">
+            <input type="number" id="lvlS" value="3" min="0" max="3" title="SCP">
+            <input type="number" id="lvlG" value="2" min="0" max="3" title="Оружие">
+            <input type="number" id="lvlA" value="1" min="0" max="3" title="Админ">
+        </div>
+    </div>
+
+    <div class="group">
+        <label>Цвета (Hex/Название)</label>
+        <div class="row">
+            <div style="flex:1"><label>Кружки</label><input type="color" id="colorDots" value="#ff0000"></div>
+            <div style="flex:1"><label>Карта</label><input type="color" id="colorBase" value="#202020"></div>
+            <div style="flex:1"><label>Текст</label><input type="color" id="colorText" value="#3498db"></div>
+        </div>
+    </div>
+
+    <div class="group">
+        <label>Надпись на карте</label>
+        <input type="text" id="cardText" value="Ключ-карта">
+    </div>
+
+    <div class="group">
+        <label>Владелец (Никнейм)</label>
+        <input type="text" id="nick" value="PlayerName">
+    </div>
+
+    <div class="group">
+        <label>Кружки МОГ (0-3)</label>
+        <input type="range" id="holes" min="0" max="3" value="1" step="1">
+    </div>
+
+    <label>Нажмите, чтобы скопировать команду:</label>
+    <div class="cmd-box" id="out" onclick="copyCmd()">ckeycard...</div>
+</div>
+
+<model-viewer id="viewer" src="model.glb" camera-controls shadow-intensity="1" exposure="1">
+    <canvas id="textureGen" width="512" height="512" style="display:none"></canvas>
+</model-viewer>
+
+<script>
+    const inputs = document.querySelectorAll('input, select');
+    const modelViewer = document.querySelector('#viewer');
+    const canvas = document.getElementById('textureGen');
+    const ctx = canvas.getContext('2d');
+
+    function update() {
+        const val = {
+            id: document.getElementById('pId').value,
+            inv: document.getElementById('invName').value,
+            s: document.getElementById('lvlS').value,
+            g: document.getElementById('lvlG').value,
+            a: document.getElementById('lvlA').value,
+            cDots: document.getElementById('colorDots').value,
+            cBase: document.getElementById('colorBase').value,
+            txt: document.getElementById('cardText').value,
+            cTxt: document.getElementById('colorText').value,
+            nick: document.getElementById('nick').value,
+            h: document.getElementById('holes').value
+        };
+
+        // Формируем команду
+        const cmd = `ckeycard ${val.id} keycardcustommanagement ${val.inv} ${val.s} ${val.g} ${val.a} ${val.cDots} ${val.cBase} ${val.txt} ${val.cTxt} ${val.nick} ${val.h}`;
+        document.getElementById('out').innerText = cmd;
+
+        // Рисуем динамическую текстуру
+        drawTexture(val);
+    }
+
+    function drawTexture(v) {
+        // Фон
+        ctx.fillStyle = v.cBase;
+        ctx.fillRect(0, 0, 512, 512);
+
+        // Текст
+        ctx.fillStyle = v.cTxt;
+        ctx.font = "bold 40px Arial";
+        ctx.fillText(v.txt.toUpperCase(), 50, 100);
         
-        const viewer = document.getElementById('viewer');
-        const selector = document.getElementById('card-selector');
-        const nameInput = document.getElementById('inp-name');
+        ctx.font = "20px Monospace";
+        ctx.fillText(v.nick, 50, 450);
 
-        function changeModel() {
-            // 1. Получаем имя файла из селектора
-            const filename = selector.value;
-            
-            // 2. Меняем 3D модель
-            viewer.src = GITHUB_URL + filename;
-            
-            // 3. Автоматически меняем название в поле ввода
-            const selectedOption = selector.options[selector.selectedIndex];
-            nameInput.value = selectedOption.getAttribute('data-name');
-            
-            generateCode();
+        // Отрисовка кружков допуска (упрощенно)
+        ctx.fillStyle = v.cDots;
+        for(let i=0; i<v.s; i++) ctx.arc(50 + (i*20), 150, 8, 0, Math.PI*2); 
+        ctx.fill();
+
+        // Обновляем текстуру на 3D модели
+        if (modelViewer.model) {
+            const mat = modelViewer.model.materials[0]; // Индекс материала карты
+            const createTexture = async () => {
+                const texture = await modelViewer.createTexture(canvas.toDataURL());
+                mat.pbrMetallicRoughness.baseColorTexture.setTexture(texture);
+            };
+            createTexture();
         }
+    }
 
-        function generateCode() {
-            const id = document.getElementById("inp-id").value;
-            const name = nameInput.value;
-            
-            // Берем цвет, который мы заранее прописали в <option> (data-color)
-            const color = selector.options[selector.selectedIndex].getAttribute('data-color');
-            
-            // Генерируем красивое описание
-            // Используем HTML теги внутри cinfo
-            const desc = `<size=20><b><color=${color}>${name}</color></b></size>`;
-            
-            const cmd = `cinfo ${id} ${desc}`;
-            document.getElementById("result").value = cmd;
-        }
+    function copyCmd() {
+        navigator.clipboard.writeText(document.getElementById('out').innerText);
+        alert("Команда скопирована!");
+    }
 
-        function copy() {
-            const t = document.getElementById("result");
-            t.select();
-            document.execCommand("copy");
-            alert("Скопировано!");
-        }
-
-        // Запуск при старте
-        changeModel();
-    </script>
+    inputs.forEach(i => i.addEventListener('input', update));
+    modelViewer.addEventListener('load', update);
+</script>
 </body>
 </html>
